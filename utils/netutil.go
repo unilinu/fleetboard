@@ -37,7 +37,55 @@ func inc(ipA net.IP) {
 	}
 }
 
-func FindAvailableCIDR(networkCIDR string, existingPeers []string, networkBits int) (string, error) {
+func FindClusterAvailableCIDR(networkCIDR string, existingPeers []string) (string, error) {
+	clusterNetworkBits, _, err := divideNetworkBits(networkCIDR)
+	if err != nil {
+		return "", err
+	}
+	return findAvailableCIDR(networkCIDR, existingPeers, clusterNetworkBits)
+
+}
+
+func FindNodeAvailableCIDR(networkCIDR string, existingPeers []string) (string, error) {
+	_, nodeNetworkBits, err := divideNetworkBits(networkCIDR)
+	if err != nil {
+		return "", err
+	}
+	return findAvailableCIDR(networkCIDR, existingPeers, nodeNetworkBits)
+
+}
+
+func divideNetworkBits(networkCIDR string) (clusterNetworkBits, nodeNetworkBits int, err error) {
+	_, network, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	networkBits, addressBits := network.Mask.Size()
+	hostBits := addressBits - networkBits
+
+	switch {
+	case hostBits >= 10 && hostBits <= 11:
+		clusterNetworkBits = networkBits + 1
+		nodeNetworkBits = addressBits - 6
+	case hostBits >= 12 && hostBits <= 17:
+		clusterNetworkBits = networkBits + 2
+		nodeNetworkBits = addressBits - 8
+	case hostBits >= 19 && hostBits <= 23:
+		clusterNetworkBits = networkBits + 3
+		nodeNetworkBits = addressBits - 8
+	case hostBits >= 24:
+		clusterNetworkBits = networkBits + 4
+		nodeNetworkBits = addressBits - 10
+
+	default:
+		err = errors.New("invalid network addressBits")
+	}
+
+	return
+}
+
+func findAvailableCIDR(networkCIDR string, existingPeers []string, networkBits int) (string, error) {
 	// Split networkCIDR into 16 size blocks
 	hostBits := 32 - networkBits // 主机位数
 	_, network, err := net.ParseCIDR(networkCIDR)

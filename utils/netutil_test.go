@@ -160,13 +160,13 @@ func Test_findAvailableCIDR(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FindAvailableCIDR(tt.args.networkCIDR, tt.args.existingPeers, tt.args.networkBits)
+			got, err := findAvailableCIDR(tt.args.networkCIDR, tt.args.existingPeers, tt.args.networkBits)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FindAvailableCIDR() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("findAvailableCIDR() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("FindAvailableCIDR() got = %v, want %v", got, tt.want)
+				t.Errorf("findAvailableCIDR() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
